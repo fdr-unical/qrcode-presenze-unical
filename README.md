@@ -1,4 +1,4 @@
-# QR Code Presenze Aula - UnICal
+# QR Code Presenze in Aula - UnICal
 
 Sistema di rilevamento presenze con QR Code dinamico standalone per aule universitarie.
 
