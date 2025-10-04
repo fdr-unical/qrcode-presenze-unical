@@ -13,7 +13,7 @@
       padding: 20px;
     }
     .container {
-      max-width: 800px;
+      max-width: 1000px;
       margin: auto;
       padding: 30px;
       background-color: white;
@@ -23,77 +23,84 @@
     h1 {
       color: #2c3e50;
       margin-bottom: 10px;
+      font-size: 2.5em;
     }
     .subtitle {
       color: #7f8c8d;
-      font-size: 1.1em;
+      font-size: 1.3em;
       margin-bottom: 24px;
     }
     .form-group {
       margin-bottom: 20px;
       text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
     label {
       display: block;
       margin-bottom: 6px;
       color: #34495e;
       font-weight: bold;
+      font-size: 1.1em;
     }
     input[type="password"] {
       width: 100%;
-      padding: 12px;
-      border: 1px solid #ccc;
+      padding: 14px;
+      border: 2px solid #ccc;
       border-radius: 8px;
-      font-size: 1em;
+      font-size: 1.1em;
       box-sizing: border-box;
     }
     small {
       color: #7f8c8d;
-      font-size: 0.85em;
+      font-size: 0.95em;
     }
     button {
       background-color: #3498db;
       color: white;
       border: none;
-      padding: 12px 24px;
-      font-size: 1em;
+      padding: 16px 32px;
+      font-size: 1.2em;
       margin-top: 10px;
       cursor: pointer;
       border-radius: 8px;
       transition: background-color 0.3s;
+      font-weight: bold;
     }
     button:hover {
       background-color: #2980b9;
     }
     .qr-container {
-      margin-top: 30px;
-      padding: 20px;
+      margin-top: 40px;
+      padding: 30px;
       background-color: #f9f9f9;
       border-radius: 12px;
       display: inline-block;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
     }
     .countdown {
-      font-size: 1.3em;
+      font-size: 1.8em;
       color: #e67e22;
-      margin-top: 10px;
+      margin-top: 20px;
       font-weight: bold;
     }
     .warning {
       background-color: #fff3cd;
       border-left: 4px solid #f39c12;
-      padding: 12px;
-      margin-top: 20px;
+      padding: 16px;
+      margin-top: 30px;
       color: #856404;
       font-weight: bold;
       border-radius: 4px;
       text-align: center;
+      font-size: 1.1em;
     }
     .status {
       color: #27ae60;
       font-weight: bold;
-      font-size: 1.1em;
-      margin-top: 8px;
+      font-size: 1.3em;
+      margin-top: 12px;
     }
   </style>
 </head>
@@ -195,17 +202,17 @@ function renderQR(baseUrl) {
   try {
     new QRCode(document.getElementById('qrcode'), {
       text: url,
-      width: 240,
-      height: 240,
+      width: 400,
+      height: 400,
       correctLevel: QRCode.CorrectLevel.H
     });
   } catch (e) {
     // Fallback per browser non compatibili con QRCode.js
     const img = document.createElement('img');
     img.alt = 'QR Code';
-    img.width = 240;
-    img.height = 240;
-    img.src = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=240`;
+    img.width = 400;
+    img.height = 400;
+    img.src = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=400`;
     document.getElementById('qrcode').appendChild(img);
   }
 
