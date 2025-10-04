@@ -44,7 +44,8 @@
       font-weight: bold;
       font-size: 1.1em;
     }
-    input[type="password"] {
+    input[type="password"],
+    input[type="number"] {
       width: 100%;
       padding: 14px;
       border: 2px solid #ccc;
@@ -52,9 +53,15 @@
       font-size: 1.1em;
       box-sizing: border-box;
     }
+    input[type="number"] {
+      text-align: center;
+      font-weight: bold;
+    }
     small {
       color: #7f8c8d;
       font-size: 0.95em;
+      display: block;
+      margin-top: 5px;
     }
     button {
       background-color: #3498db;
@@ -71,6 +78,10 @@
     button:hover {
       background-color: #2980b9;
     }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
     .qr-container {
       margin-top: 40px;
       padding: 30px;
@@ -81,7 +92,6 @@
     }
     .countdown {
       font-size: 1.8em;
-      color: #e67e22;
       margin-top: 20px;
       font-weight: bold;
     }
@@ -117,6 +127,13 @@
     <small>L'URL è nascosto per sicurezza e non sarà visibile agli studenti.</small>
   </div>
 
+  <!-- Configurazione intervallo -->
+  <div class="form-group">
+    <label for="periodInput">Intervallo aggiornamento QR Code (secondi):</label>
+    <input type="number" id="periodInput" value="60" min="45" max="180" step="15" />
+    <small>Minimo 45 secondi. Consigliato: 60s (aule standard), 90s (aule grandi 200+ studenti)</small>
+  </div>
+
   <button id="startBtn">Avvia QR Code</button>
 
   <!-- Messaggio di stato -->
@@ -132,13 +149,13 @@
 
   <!-- Messaggio di avviso -->
   <div class="warning" id="warning">
-    ⏰ Il QR code cambia ogni minuto. Scansionalo subito quando appare!
+    ⏰ Il QR code cambia automaticamente. Scansionalo subito quando appare!
   </div>
 </div>
 
 <script>
 // Parametri dinamici
-const PERIOD = 60; // Secondi tra aggiornamenti
+let PERIOD = 60; // Valore di default, verrà sovrascritto dall'input
 let timerId = null;
 let countdownTimer = null;
 
@@ -158,14 +175,13 @@ function buildUrl(baseUrl, token) {
   }
 }
 
-// Aggiorna il contatore in tempo reale
+// Aggiorna il contatore in tempo reale (usa PERIOD dinamico)
 function updateCountdown() {
-  const now = new Date();
-  const seconds = now.getSeconds();
-  const remaining = 60 - seconds;
+  const nowSec = Math.floor(Date.now() / 1000);
+  const elapsed = nowSec % PERIOD;
+  const remaining = PERIOD - elapsed;
   const countdownEl = document.getElementById('countdown');
 
-  // MODIFICA CHIAVE: Valido per tutti i 60 secondi!
   countdownEl.textContent = `✅ Scansiona ora! Rimangono ${remaining} secondi`;
   countdownEl.style.color = remaining > 10 ? '#27ae60' : '#e74c3c';
 }
@@ -195,10 +211,10 @@ function renderQR(baseUrl) {
     document.getElementById('qrcode').appendChild(img);
   }
 
-  document.getElementById('status').textContent = "✅ QR Code valido per 60 secondi";
+  document.getElementById('status').textContent = `✅ QR Code valido per ${PERIOD} secondi`;
 }
 
-// Aggiorna ogni minuto
+// Aggiorna ogni PERIOD secondi
 function scheduleNextUpdate() {
   const nowSec = Math.floor(Date.now() / 1000);
   const nextBinStart = ((Math.floor(nowSec / PERIOD) + 1) * PERIOD);
@@ -222,23 +238,47 @@ function tick() {
   updateCountdown();
 }
 
-// Avvio
+// Avvio con validazione
 document.getElementById('startBtn').addEventListener('click', function () {
   const urlInput = document.getElementById('formUrl');
+  const periodInput = document.getElementById('periodInput');
+
   if (!urlInput.value.trim()) {
     alert("Per favore inserisci un URL valido.");
     return;
   }
 
+  // Leggi e valida il periodo
+  const userPeriod = parseInt(periodInput.value);
+  if (isNaN(userPeriod) || userPeriod < 45 || userPeriod > 180) {
+    alert("L'intervallo deve essere tra 45 e 180 secondi.");
+    return;
+  }
+
+  PERIOD = userPeriod; // Imposta il periodo scelto dall'utente
+
+  // Aggiorna il messaggio di avviso
+  const warningEl = document.getElementById('warning');
+  if (PERIOD === 60) {
+    warningEl.textContent = "⏰ Il QR code cambia ogni minuto. Scansionalo subito quando appare!";
+  } else {
+    warningEl.textContent = `⏰ Il QR code cambia ogni ${PERIOD} secondi. Scansionalo subito quando appare!`;
+  }
+
   this.disabled = true;
-  this.textContent = "Sistema attivo";
+  this.textContent = `Sistema attivo (${PERIOD}s)`;
   this.style.backgroundColor = "#27ae60";
-  tick();
+
+  // Disabilita anche gli input
+  urlInput.disabled = true;
+  periodInput.disabled = true;
+
+  tick(); // Parte immediatamente!
 });
 
 // Inizializza
 window.onload = function () {
-  document.getElementById('status').textContent = `⏳ Sistema pronto. Inserisci l'URL e clicca Avvia.`;
+  document.getElementById('status').textContent = `⏳ Sistema pronto. Configura e clicca Avvia.`;
 };
 </script>
 
