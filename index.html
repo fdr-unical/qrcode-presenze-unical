@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>QR Code Presenze - Aula</title>
+  <title>Rilevazione Presenze - Aula</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -108,7 +108,7 @@
 
 <div class="container">
   <h1>Rilevazione Presenze in Aula</h1>
- <p class="subtitle">Sistema con QR Code dinamico - UniCal</p>
+  <p class="subtitle">Sistema con QR Code dinamico - UniCal</p>
 
   <!-- Form per inserire il link -->
   <div class="form-group">
@@ -123,7 +123,7 @@
   <div class="status" id="status"></div>
 
   <!-- Contatore in tempo reale -->
-  <p class="countdown" id="countdown">Scansiona ora!</p>
+  <p class="countdown" id="countdown">Pronto per iniziare</p>
 
   <!-- QR Code -->
   <div class="qr-container">
@@ -140,30 +140,22 @@
 // Parametri dinamici
 const PERIOD = 60; // Secondi tra aggiornamenti
 let timerId = null;
-let lastBin = -1;
-let tickCount = 0;
+let countdownTimer = null;
 
 function clearQR() {
   const qrcodeDiv = document.getElementById('qrcode');
   qrcodeDiv.innerHTML = '';
 }
 
-// Genera URL semplice: ?t=timestamp (più sicuro e compatibile)
+// Genera URL con parametro timestamp
 function buildUrl(baseUrl, token) {
   try {
     const url = new URL(baseUrl);
-    url.searchParams.set('t', token); // parametro semplice
+    url.searchParams.set('t', token);
     return url.toString();
   } catch (e) {
     return baseUrl + (baseUrl.includes('?') ? '&' : '?') + 't=' + encodeURIComponent(token);
   }
-}
-
-// Controlla se il codice è ancora valido anche in ritardo di 30 secondi
-function isTokenValid(bin, nowSec = Math.floor(Date.now() / 1000)) {
-  const startSec = bin * PERIOD;
-  const endSec = (bin + 1) * PERIOD;
-  return nowSec >= startSec && nowSec < endSec; // valido per 60 secondi
 }
 
 // Aggiorna il contatore in tempo reale
@@ -173,30 +165,17 @@ function updateCountdown() {
   const remaining = 60 - seconds;
   const countdownEl = document.getElementById('countdown');
 
-  if (seconds < 30) {
-    countdownEl.textContent = `⏱️ Scansiona ora! (rimangono ${remaining} secondi)`; // prima metà del minuto
-  } else {
-    countdownEl.textContent = `🔄 Nuovo codice tra ${remaining} secondi`; // dopo i 30"
-  }
+  // MODIFICA CHIAVE: Valido per tutti i 60 secondi!
+  countdownEl.textContent = `✅ Scansiona ora! Rimangono ${remaining} secondi`;
+  countdownEl.style.color = remaining > 10 ? '#27ae60' : '#e74c3c';
 }
 
-// Generazione QR con parametro t=...
+// Generazione QR
 function renderQR(baseUrl) {
   const nowSec = Math.floor(Date.now() / 1000);
   const bin = Math.floor(nowSec / PERIOD);
-
-  if (!isTokenValid(bin, nowSec)) {
-    // Forza il token corrente anche se scaduto (tolleranza)
-    const fallbackBin = Math.floor((nowSec - 30) / PERIOD); // cerca in precedenza
-    const urlToUse = buildUrl(baseUrl, fallbackBin);
-    document.getElementById('status').textContent = "⚠️ Link scaduto: stiamo mostrando il codice del minuto scorso.";
-    setTimeout(() => {
-      renderQR(baseUrl); // aggiorna automaticamente
-    }, 30000 - (nowSec % 60) * 1000);
-    return;
-  }
-
   const url = buildUrl(baseUrl, bin);
+
   clearQR();
 
   try {
@@ -207,7 +186,7 @@ function renderQR(baseUrl) {
       correctLevel: QRCode.CorrectLevel.H
     });
   } catch (e) {
-    // Fallback per browser non compatibili con QRCode.js
+    // Fallback per browser non compatibili
     const img = document.createElement('img');
     img.alt = 'QR Code';
     img.width = 400;
@@ -216,14 +195,15 @@ function renderQR(baseUrl) {
     document.getElementById('qrcode').appendChild(img);
   }
 
-  document.getElementById('status').textContent = "✅ Link valido. Scansiona ora!";
+  document.getElementById('status').textContent = "✅ QR Code valido per 60 secondi";
 }
 
 // Aggiorna ogni minuto
 function scheduleNextUpdate() {
   const nowSec = Math.floor(Date.now() / 1000);
   const nextBinStart = ((Math.floor(nowSec / PERIOD) + 1) * PERIOD);
-  const delayMs = (nextBinStart - nowSec) * 1000 + 250; // aggiungi piccolo ritardo
+  const delayMs = (nextBinStart - nowSec) * 1000 + 250;
+
   timerId = setTimeout(() => {
     tick();
   }, Math.max(250, delayMs));
@@ -236,9 +216,10 @@ function tick() {
   renderQR(baseUrl);
   scheduleNextUpdate();
 
-  // Aggiorna ogni secondo
-  setInterval(updateCountdown, 1000);
-  updateCountdown(); // aggiorna subito
+  // Aggiorna countdown ogni secondo
+  if (countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(updateCountdown, 1000);
+  updateCountdown();
 }
 
 // Avvio
@@ -250,15 +231,14 @@ document.getElementById('startBtn').addEventListener('click', function () {
   }
 
   this.disabled = true;
-  this.textContent = "Aggiornamento in corso...";
+  this.textContent = "Sistema attivo";
+  this.style.backgroundColor = "#27ae60";
   tick();
 });
 
-// Inizializza il contatore al caricamento
+// Inizializza
 window.onload = function () {
-  const nowSec = Math.floor(Date.now() / 1000);
-  document.getElementById('status').textContent = `⏳ Sistema attivo. Aggiornamento ogni ${PERIOD} secondi.`;
-  updateCountdown();
+  document.getElementById('status').textContent = `⏳ Sistema pronto. Inserisci l'URL e clicca Avvia.`;
 };
 </script>
 
