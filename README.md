@@ -94,4 +94,4 @@ Per domande, supporto o collaborazioni:
 **Nota**: Questo strumento è progettato per integrarsi con Microsoft Forms. Assicurati di avere un form attivo e accessibile prima di utilizzare il sistema.
 
 Sviluppato da Francesco De Rango  
-In uso presso Università della Calabria
+In uso presso l'Università della Calabria
