@@ -4,7 +4,7 @@ Sistema di rilevamento presenze con QR Code dinamico standalone per aule univers
 
 ## 📋 Descrizione
 
-Questo strumento è una versione **HTML standalone** del sistema di rilevamento presenze per l'Università della Calabria. A differenza della versione Streamlit (https://github.com/fdr-unical/presenze-aula-unical), questa versione funziona completamente nel browser senza necessità di server.
+Questo strumento è una versione **HTML standalone** del sistema di rilevamento presenze per l'Università della Calabria. Funziona completamente nel browser senza necessità di server, utilizzando QR code dinamici con token temporali per prevenire frodi.
 
 Il sistema genera un QR code che si aggiorna automaticamente ogni 60 secondi, impedendo agli studenti di condividere il link con colleghi assenti.
 
@@ -59,18 +59,11 @@ Funziona su tutti i dispositivi e browser moderni. Gli studenti possono scansion
 
 ## 👨‍🏫 Caso d'uso
 
-Sviluppato per classi di circa 200 studenti presso l'Università della Calabria (UnICal). Ideale per:
+Sistema sviluppato presso l'Università della Calabria (UnICal) per la gestione delle presenze in aule universitarie. Ideale per:
 - Lezioni frontali in grandi aule
 - Seminari e workshop
-- Esami e verifiche
-- Qualsiasi situazione che richieda rilevamento presenze anti-frode
-
-## 🔗 Progetti correlati
-
-Questo progetto fa parte dell'ecosistema di strumenti per la gestione presenze UnICal:
-
-- **[presenze-aula-unical](https://github.com/fdr-unical/presenze-aula-unical)** - Versione Streamlit con validazione server-side
-- **qrcode-presenze-unical** - Questa versione HTML standalone (current)
+- Esami e verifiche  
+- Qualsiasi contesto didattico che richieda rilevamento presenze anti-frode
 
 ## 📄 Licenza
 
@@ -93,13 +86,12 @@ Apri una Issue su: https://github.com/fdr-unical/qrcode-presenze-unical/issues
 
 Per domande, supporto o collaborazioni:
 
-- **Repository principale**: https://github.com/fdr-unical/presenze-aula-unical
-- **Questa versione**: https://github.com/fdr-unical/qrcode-presenze-unical
+- **Issues**: https://github.com/fdr-unical/qrcode-presenze-unical/issues
 - **Email**: francesco.derango@unical.it
 
 ---
 
 **Nota**: Questo strumento è progettato per integrarsi con Microsoft Forms. Assicurati di avere un form attivo e accessibile prima di utilizzare il sistema.
 
-Sviluppato con ❤️ da Francesco De Rango  
+Sviluppato da Francesco De Rango  
 In uso presso Università della Calabria
