@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Code Presenze - Aula</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background-color: #f4f7fa;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 30px;
+      background-color: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #7f8c8d;
+      font-size: 1.1em;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #34495e;
+      font-weight: bold;
+    }
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    small {
+      color: #7f8c8d;
+      font-size: 0.85em;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1em;
+      margin-top: 10px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .qr-container {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 12px;
+      display: inline-block;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    .countdown {
+      font-size: 1.3em;
+      color: #e67e22;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .warning {
+      background-color: #fff3cd;
+      border-left: 4px solid #f39c12;
+      padding: 12px;
+      margin-top: 20px;
+      color: #856404;
+      font-weight: bold;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .status {
+      color: #27ae60;
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>QR Code Presenze Aula</h1>
+  <p class="subtitle">Scansiona il codice ogni minuto per registrare la tua presenza.</p>
+
+  <!-- Form per inserire il link -->
+  <div class="form-group">
+    <label for="formUrl">Inserisci l'URL del form Microsoft:</label>
+    <input type="password" id="formUrl" placeholder="https://forms.microsoft.com/..." required />
+    <small>L'URL è nascosto per sicurezza e non sarà visibile agli studenti.</small>
+  </div>
+
+  <button id="startBtn">Avvia QR Code</button>
+
+  <!-- Messaggio di stato -->
+  <div class="status" id="status"></div>
+
+  <!-- Contatore in tempo reale -->
+  <p class="countdown" id="countdown">Scansiona ora!</p>
+
+  <!-- QR Code -->
+  <div class="qr-container">
+    <div id="qrcode"></div>
+  </div>
+
+  <!-- Messaggio di avviso -->
+  <div class="warning" id="warning">
+    🔔 Scansiona il codice esattamente ogni minuto. Il link è valido per i primi 30 secondi dopo l'aggiornamento.
+  </div>
+</div>
+
+<script>
+// Parametri dinamici
+const PERIOD = 60; // Secondi tra aggiornamenti
+let timerId = null;
+let lastBin = -1;
+let tickCount = 0;
+
+function clearQR() {
+  const qrcodeDiv = document.getElementById('qrcode');
+  qrcodeDiv.innerHTML = '';
+}
+
+// Genera URL semplice: ?t=timestamp (più sicuro e compatibile)
+function buildUrl(baseUrl, token) {
+  try {
+    const url = new URL(baseUrl);
+    url.searchParams.set('t', token); // parametro semplice
+    return url.toString();
+  } catch (e) {
+    return baseUrl + (baseUrl.includes('?') ? '&' : '?') + 't=' + encodeURIComponent(token);
+  }
+}
+
+// Controlla se il codice è ancora valido anche in ritardo di 30 secondi
+function isTokenValid(bin, nowSec = Math.floor(Date.now() / 1000)) {
+  const startSec = bin * PERIOD;
+  const endSec = (bin + 1) * PERIOD;
+  return nowSec >= startSec && nowSec < endSec; // valido per 60 secondi
+}
+
+// Aggiorna il contatore in tempo reale
+function updateCountdown() {
+  const now = new Date();
+  const seconds = now.getSeconds();
+  const remaining = 60 - seconds;
+  const countdownEl = document.getElementById('countdown');
+
+  if (seconds < 30) {
+    countdownEl.textContent = `⏱️ Scansiona ora! (rimangono ${remaining} secondi)`; // prima metà del minuto
+  } else {
+    countdownEl.textContent = `🔄 Nuovo codice tra ${remaining} secondi`; // dopo i 30"
+  }
+}
+
+// Generazione QR con parametro t=...
+function renderQR(baseUrl) {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const bin = Math.floor(nowSec / PERIOD);
+
+  if (!isTokenValid(bin, nowSec)) {
+    // Forza il token corrente anche se scaduto (tolleranza)
+    const fallbackBin = Math.floor((nowSec - 30) / PERIOD); // cerca in precedenza
+    const urlToUse = buildUrl(baseUrl, fallbackBin);
+    document.getElementById('status').textContent = "⚠️ Link scaduto: stiamo mostrando il codice del minuto scorso.";
+    setTimeout(() => {
+      renderQR(baseUrl); // aggiorna automaticamente
+    }, 30000 - (nowSec % 60) * 1000);
+    return;
+  }
+
+  const url = buildUrl(baseUrl, bin);
+  clearQR();
+
+  try {
+    new QRCode(document.getElementById('qrcode'), {
+      text: url,
+      width: 240,
+      height: 240,
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  } catch (e) {
+    // Fallback per browser non compatibili con QRCode.js
+    const img = document.createElement('img');
+    img.alt = 'QR Code';
+    img.width = 240;
+    img.height = 240;
+    img.src = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=240`;
+    document.getElementById('qrcode').appendChild(img);
+  }
+
+  document.getElementById('status').textContent = "✅ Link valido. Scansiona ora!";
+}
+
+// Aggiorna ogni minuto
+function scheduleNextUpdate() {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const nextBinStart = ((Math.floor(nowSec / PERIOD) + 1) * PERIOD);
+  const delayMs = (nextBinStart - nowSec) * 1000 + 250; // aggiungi piccolo ritardo
+  timerId = setTimeout(() => {
+    tick();
+  }, Math.max(250, delayMs));
+}
+
+function tick() {
+  const baseUrl = document.getElementById('formUrl').value.trim();
+  if (!baseUrl) return;
+
+  renderQR(baseUrl);
+  scheduleNextUpdate();
+
+  // Aggiorna ogni secondo
+  setInterval(updateCountdown, 1000);
+  updateCountdown(); // aggiorna subito
+}
+
+// Avvio
+document.getElementById('startBtn').addEventListener('click', function () {
+  const urlInput = document.getElementById('formUrl');
+  if (!urlInput.value.trim()) {
+    alert("Per favore inserisci un URL valido.");
+    return;
+  }
+
+  this.disabled = true;
+  this.textContent = "Aggiornamento in corso...";
+  tick();
+});
+
+// Inizializza il contatore al caricamento
+window.onload = function () {
+  const nowSec = Math.floor(Date.now() / 1000);
+  document.getElementById('status').textContent = `⏳ Sistema attivo. Aggiornamento ogni ${PERIOD} secondi.`;
+  updateCountdown();
+};
+</script>
+
+<!-- QR Code Library -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode.js@0.7.0/build/qrcode.min.js"></script>
+
+</body>
+</html>
