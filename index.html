@@ -176,12 +176,11 @@
   <p id="validationMessage">Controllo validità del QR Code...</p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
 // =============================================
 // CONFIGURAZIONE
 // =============================================
-const TOLERANCE = 1; // Finestre di tolleranza (±1 = accetta anche bin precedente/successivo)
+const TOLERANCE = 1; // Finestre di tolleranza (±1)
 
 // =============================================
 // RILEVA MODALITÀ
@@ -196,9 +195,6 @@ if (t && p && f) {
   document.getElementById('generator').style.display = 'none';
   document.getElementById('validation').style.display = 'block';
   validaQR(parseInt(t), parseInt(p), decodeURIComponent(f));
-} else {
-  // MODALITÀ GENERATORE
-  // (già visibile)
 }
 
 // =============================================
@@ -260,7 +256,7 @@ function avviaQR() {
   PERIOD = parseInt(periodInput.value);
 
   if (!FORM_URL) {
-    alert('⚠️ Inserisci l'URL del form Microsoft!');
+    alert('⚠️ Inserisci l\'URL del form Microsoft!');
     return;
   }
 
@@ -294,13 +290,26 @@ function generaQR() {
   console.log('Bin corrente:', bin);
 
   // Pulisci e rigenera QR
-  document.getElementById('qrcode').innerHTML = '';
-  new QRCode(document.getElementById('qrcode'), {
-    text: qrUrl,
-    width: 400,
-    height: 400,
-    correctLevel: QRCode.CorrectLevel.H
-  });
+  const qrcodeDiv = document.getElementById('qrcode');
+  qrcodeDiv.innerHTML = '';
+
+  // ✅ USA LA LIBRERIA CORRETTA qrcode.js
+  try {
+    new QRCode(qrcodeDiv, {
+      text: qrUrl,
+      width: 400,
+      height: 400,
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  } catch (e) {
+    console.error('Errore generazione QR:', e);
+    // Fallback a QuickChart
+    const img = document.createElement('img');
+    img.src = `https://quickchart.io/qr?text=${encodeURIComponent(qrUrl)}&size=400`;
+    img.width = 400;
+    img.height = 400;
+    qrcodeDiv.appendChild(img);
+  }
 
   // Programma prossimo update
   const prossimoBin = (bin + 1) * PERIOD;
@@ -330,6 +339,9 @@ function aggiornaCountdown() {
   }
 }
 </script>
+
+<!-- ✅ LIBRERIA CORRETTA qrcode.js@0.7.0 -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode.js@0.7.0/build/qrcode.min.js"></script>
 
 </body>
 </html>
