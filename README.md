@@ -147,7 +147,7 @@ Contributi benvenuti! Per bug o feature:
 
 **Francesco De Rango**  
 📧 francesco.derango@unical.it  
-🏛️ Dipartimento di Ingegneria Informatica, Modellistica, Elettronica e Sistemistica (DIMES)  
+🏛️ Dipartimento di Biologia, Ecologia e Scienze della Terra (DIBEST)   
 🎓 Università della Calabria  
 🔗 GitHub: [@fdr-unical](https://github.com/fdr-unical)
 
