@@ -165,14 +165,9 @@ function clearQR() {
 }
 
 // Genera URL con parametro timestamp
+// Costruisce il link verso la pagina di validazione su GitHub Pages
 function buildUrl(baseUrl, token) {
-  try {
-    const url = new URL(baseUrl);
-    url.searchParams.set('t', token);
-    return url.toString();
-  } catch (e) {
-    return baseUrl + (baseUrl.includes('?') ? '&' : '?') + 't=' + encodeURIComponent(token);
-  }
+  return `https://fdr-unical.github.io/qrcode-presenze-unical/redirect.html?t=${token}`;
 }
 
 // Aggiorna il contatore in tempo reale (usa PERIOD dinamico)

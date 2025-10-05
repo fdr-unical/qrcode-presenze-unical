@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifica QR Code - UniCal</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background-color: #f8f9fa;
+      margin: 0;
+      padding: 60px;
+    }
+    .box {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    p {
+      font-size: 1.2em;
+      color: #7f8c8d;
+    }
+  </style>
+</head>
+<body>
+  <div class="box" id="message">
+    <h1>Verifica QR Code...</h1>
+    <p>Attendere, controllo validità...</p>
+  </div>
+
+  <script>
+    // 🕒 Parametri
+    const EXPIRATION_SECONDS = 60; // validità del QR
+    const MS_FORM_URL = "https://forms.office.com/Pages/ResponsePage.aspx?id=TUO_FORM_ID"; 
+    // 🔁 Sostituisci sopra con il tuo link Microsoft Forms
+
+    function showExpired() {
+      document.getElementById("message").innerHTML = `
+        <h1 style="color:#e74c3c;">⛔ QR Code scaduto</h1>
+        <p>Questo QR non è più valido. Richiedi al docente di mostrarne uno nuovo.</p>
+      `;
+    }
+
+    function main() {
+      const params = new URLSearchParams(window.location.search);
+      const token = parseInt(params.get("t"));
+      if (isNaN(token)) {
+        showExpired();
+        return;
+      }
+
+      const nowSec = Math.floor(Date.now() / 1000);
+      const qrTime = token * EXPIRATION_SECONDS;
+
+      if (nowSec - qrTime > EXPIRATION_SECONDS) {
+        showExpired();
+      } else {
+        document.getElementById("message").innerHTML = `
+          <h1 style="color:#27ae60;">✅ QR valido</h1>
+          <p>Reindirizzamento al modulo...</p>
+        `;
+        setTimeout(() => {
+          window.location.href = MS_FORM_URL;
+        }, 1200);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
