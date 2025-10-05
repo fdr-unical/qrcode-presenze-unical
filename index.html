@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rilevazione Presenze - Aula</title>
+  <title>Rilevazione Presenze - Aula UniCal</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -112,22 +112,29 @@
       font-size: 1.3em;
       margin-top: 12px;
     }
+    .validation-box {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 600px;
+      margin: 60px auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
   </style>
 </head>
 <body>
 
-<div class="container">
+<!-- MODALITÀ GENERATORE QR (default) -->
+<div class="container" id="generator-mode">
   <h1>Rilevazione Presenze in Aula</h1>
   <p class="subtitle">Sistema con QR Code dinamico - UniCal</p>
 
-  <!-- Form per inserire il link -->
   <div class="form-group">
     <label for="formUrl">Inserisci l'URL del form Microsoft:</label>
     <input type="password" id="formUrl" placeholder="https://forms.microsoft.com/..." required />
     <small>L'URL è nascosto per sicurezza e non sarà visibile agli studenti.</small>
   </div>
 
-  <!-- Configurazione intervallo -->
   <div class="form-group">
     <label for="periodInput">Intervallo aggiornamento QR Code (secondi):</label>
     <input type="number" id="periodInput" value="60" min="45" max="180" step="15" />
@@ -136,148 +143,203 @@
 
   <button id="startBtn">Avvia QR Code</button>
 
-  <!-- Messaggio di stato -->
   <div class="status" id="status"></div>
-
-  <!-- Contatore in tempo reale -->
   <p class="countdown" id="countdown">Pronto per iniziare</p>
 
-  <!-- QR Code -->
   <div class="qr-container">
     <div id="qrcode"></div>
   </div>
 
-  <!-- Messaggio di avviso -->
   <div class="warning" id="warning">
     ⏰ Il QR code cambia automaticamente. Scansionalo subito quando appare!
   </div>
 </div>
 
+<!-- MODALITÀ VALIDAZIONE (quando viene scansionato il QR) -->
+<div class="validation-box" id="validation-mode" style="display:none;">
+  <h1 id="validation-title">🔍 Verifica QR Code...</h1>
+  <p id="validation-message">Attendere, controllo validità...</p>
+</div>
+
 <script>
-// Parametri dinamici
-let PERIOD = 60; // Valore di default, verrà sovrascritto dall'input
-let timerId = null;
-let countdownTimer = null;
+// ========================================
+// RILEVA SE SIAMO IN MODALITÀ VALIDAZIONE
+// ========================================
+const urlParams = new URLSearchParams(window.location.search);
+const validationToken = urlParams.get("t");
+const validationPeriod = urlParams.get("period");
+const validationForm = urlParams.get("form");
 
-function clearQR() {
-  const qrcodeDiv = document.getElementById('qrcode');
-  qrcodeDiv.innerHTML = '';
+if (validationToken && validationPeriod && validationForm) {
+  // MODALITÀ VALIDAZIONE
+  document.getElementById('generator-mode').style.display = 'none';
+  document.getElementById('validation-mode').style.display = 'block';
+  validateQRCode(validationToken, validationPeriod, validationForm);
+} else {
+  // MODALITÀ GENERATORE (normale)
+  initGenerator();
 }
 
-// Genera URL con parametro timestamp
-// Costruisce il link verso la pagina di validazione su GitHub Pages
-function buildUrl(baseUrl, token) {
-  return `https://fdr-unical.github.io/qrcode-presenze-unical/redirect.html?t=${token}`;
-}
+// ========================================
+// FUNZIONE DI VALIDAZIONE
+// ========================================
+function validateQRCode(token, period, formUrl) {
+  const TOLERANCE = 1; // ±1 finestra di tolleranza
 
-// Aggiorna il contatore in tempo reale (usa PERIOD dinamico)
-function updateCountdown() {
-  const nowSec = Math.floor(Date.now() / 1000);
-  const elapsed = nowSec % PERIOD;
-  const remaining = PERIOD - elapsed;
-  const countdownEl = document.getElementById('countdown');
+  const binRicevuto = parseInt(token);
+  const periodSeconds = parseInt(period);
 
-  countdownEl.textContent = `✅ Scansiona ora! Rimangono ${remaining} secondi`;
-  countdownEl.style.color = remaining > 10 ? '#27ae60' : '#e74c3c';
-}
-
-// Generazione QR
-function renderQR(baseUrl) {
-  const nowSec = Math.floor(Date.now() / 1000);
-  const bin = Math.floor(nowSec / PERIOD);
-  const url = buildUrl(baseUrl, bin);
-
-  clearQR();
-
-  try {
-    new QRCode(document.getElementById('qrcode'), {
-      text: url,
-      width: 400,
-      height: 400,
-      correctLevel: QRCode.CorrectLevel.H
-    });
-  } catch (e) {
-    // Fallback per browser non compatibili
-    const img = document.createElement('img');
-    img.alt = 'QR Code';
-    img.width = 400;
-    img.height = 400;
-    img.src = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=400`;
-    document.getElementById('qrcode').appendChild(img);
-  }
-
-  document.getElementById('status').textContent = `✅ QR Code valido per ${PERIOD} secondi`;
-}
-
-// Aggiorna ogni PERIOD secondi
-function scheduleNextUpdate() {
-  const nowSec = Math.floor(Date.now() / 1000);
-  const nextBinStart = ((Math.floor(nowSec / PERIOD) + 1) * PERIOD);
-  const delayMs = (nextBinStart - nowSec) * 1000 + 250;
-
-  timerId = setTimeout(() => {
-    tick();
-  }, Math.max(250, delayMs));
-}
-
-function tick() {
-  const baseUrl = document.getElementById('formUrl').value.trim();
-  if (!baseUrl) return;
-
-  renderQR(baseUrl);
-  scheduleNextUpdate();
-
-  // Aggiorna countdown ogni secondo
-  if (countdownTimer) clearInterval(countdownTimer);
-  countdownTimer = setInterval(updateCountdown, 1000);
-  updateCountdown();
-}
-
-// Avvio con validazione
-document.getElementById('startBtn').addEventListener('click', function () {
-  const urlInput = document.getElementById('formUrl');
-  const periodInput = document.getElementById('periodInput');
-
-  if (!urlInput.value.trim()) {
-    alert("Per favore inserisci un URL valido.");
+  if (isNaN(binRicevuto) || isNaN(periodSeconds)) {
+    showValidationError("❌ QR Code non valido", "Parametri errati o danneggiati.");
     return;
   }
 
-  // Leggi e valida il periodo
-  const userPeriod = parseInt(periodInput.value);
-  if (isNaN(userPeriod) || userPeriod < 45 || userPeriod > 180) {
-    alert("L'intervallo deve essere tra 45 e 180 secondi.");
-    return;
-  }
+  const nowSec = Math.floor(Date.now() / 1000);
+  const binCorrente = Math.floor(nowSec / periodSeconds);
+  const differenza = Math.abs(binCorrente - binRicevuto);
 
-  PERIOD = userPeriod; // Imposta il periodo scelto dall'utente
+  if (differenza <= TOLERANCE) {
+    // QR VALIDO - Redirect al form
+    document.getElementById('validation-title').textContent = "✅ QR Code valido!";
+    document.getElementById('validation-title').style.color = "#27ae60";
+    document.getElementById('validation-message').textContent = "Reindirizzamento al modulo presenze...";
 
-  // Aggiorna il messaggio di avviso
-  const warningEl = document.getElementById('warning');
-  if (PERIOD === 60) {
-    warningEl.textContent = "⏰ Il QR code cambia ogni minuto. Scansionalo subito quando appare!";
+    // Redirect dopo 1 secondo
+    setTimeout(() => {
+      window.location.href = decodeURIComponent(formUrl);
+    }, 1000);
   } else {
-    warningEl.textContent = `⏰ Il QR code cambia ogni ${PERIOD} secondi. Scansionalo subito quando appare!`;
+    // QR SCADUTO
+    const secondiScaduto = (differenza - TOLERANCE) * periodSeconds;
+    showValidationError(
+      "⛔ QR Code scaduto", 
+      `Questo QR non è più valido (scaduto da ${secondiScaduto} secondi). Richiedi al docente di mostrare il QR Code aggiornato.`
+    );
+  }
+}
+
+function showValidationError(title, message) {
+  document.getElementById('validation-title').textContent = title;
+  document.getElementById('validation-title').style.color = "#e74c3c";
+  document.getElementById('validation-message').textContent = message;
+}
+
+// ========================================
+// FUNZIONE GENERATORE QR
+// ========================================
+function initGenerator() {
+  let PERIOD = 60;
+  let timerId = null;
+  let countdownTimer = null;
+  let formUrl = "";
+
+  function clearQR() {
+    document.getElementById('qrcode').innerHTML = '';
   }
 
-  this.disabled = true;
-  this.textContent = `Sistema attivo (${PERIOD}s)`;
-  this.style.backgroundColor = "#27ae60";
+  function buildUrl(baseUrl, token, period) {
+    // Il QR punta allo stesso file HTML ma con parametri di validazione
+    const currentPageUrl = window.location.href.split('?')[0];
+    return `${currentPageUrl}?t=${token}&period=${period}&form=${encodeURIComponent(baseUrl)}`;
+  }
 
-  // Disabilita anche gli input
-  urlInput.disabled = true;
-  periodInput.disabled = true;
+  function updateCountdown() {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const elapsed = nowSec % PERIOD;
+    const remaining = PERIOD - elapsed;
+    const countdownEl = document.getElementById('countdown');
 
-  tick(); // Parte immediatamente!
-});
+    countdownEl.textContent = `✅ Scansiona ora! Rimangono ${remaining} secondi`;
+    countdownEl.style.color = remaining > 10 ? '#27ae60' : '#e74c3c';
+  }
 
-// Inizializza
-window.onload = function () {
+  function renderQR(baseUrl) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const bin = Math.floor(nowSec / PERIOD);
+    const url = buildUrl(baseUrl, bin, PERIOD);
+
+    clearQR();
+
+    try {
+      new QRCode(document.getElementById('qrcode'), {
+        text: url,
+        width: 400,
+        height: 400,
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    } catch (e) {
+      // Fallback per browser non compatibili
+      const img = document.createElement('img');
+      img.alt = 'QR Code';
+      img.width = 400;
+      img.height = 400;
+      img.src = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=400`;
+      document.getElementById('qrcode').appendChild(img);
+    }
+
+    document.getElementById('status').textContent = `✅ QR Code valido per ${PERIOD} secondi`;
+  }
+
+  function scheduleNextUpdate() {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const nextBinStart = ((Math.floor(nowSec / PERIOD) + 1) * PERIOD);
+    const delayMs = (nextBinStart - nowSec) * 1000 + 250;
+
+    timerId = setTimeout(() => {
+      tick();
+    }, Math.max(250, delayMs));
+  }
+
+  function tick() {
+    if (!formUrl) return;
+    renderQR(formUrl);
+    scheduleNextUpdate();
+
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(updateCountdown, 1000);
+    updateCountdown();
+  }
+
+  document.getElementById('startBtn').addEventListener('click', function () {
+    const urlInput = document.getElementById('formUrl');
+    const periodInput = document.getElementById('periodInput');
+
+    if (!urlInput.value.trim()) {
+      alert("Per favore inserisci un URL valido.");
+      return;
+    }
+
+    const userPeriod = parseInt(periodInput.value);
+    if (isNaN(userPeriod) || userPeriod < 45 || userPeriod > 180) {
+      alert("L'intervallo deve essere tra 45 e 180 secondi.");
+      return;
+    }
+
+    PERIOD = userPeriod;
+    formUrl = urlInput.value.trim();
+
+    const warningEl = document.getElementById('warning');
+    if (PERIOD === 60) {
+      warningEl.textContent = "⏰ Il QR code cambia ogni minuto. Scansionalo subito quando appare!";
+    } else {
+      warningEl.textContent = `⏰ Il QR code cambia ogni ${PERIOD} secondi. Scansionalo subito quando appare!`;
+    }
+
+    this.disabled = true;
+    this.textContent = `Sistema attivo (${PERIOD}s)`;
+    this.style.backgroundColor = "#27ae60";
+
+    urlInput.disabled = true;
+    periodInput.disabled = true;
+
+    tick();
+  });
+
   document.getElementById('status').textContent = `⏳ Sistema pronto. Configura e clicca Avvia.`;
-};
+}
 </script>
 
-<!-- QR Code Library -->
+<!-- Libreria QRCode.js -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode.js@0.7.0/build/qrcode.min.js"></script>
 
 </body>
