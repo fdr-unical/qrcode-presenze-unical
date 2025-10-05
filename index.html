@@ -3,344 +3,333 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rilevazione Presenze - Aula UniCal</title>
+  <title>Presenze Aula - UniCal</title>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      text-align: center;
-      background-color: #f4f7fa;
-      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 20px;
     }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      padding: 30px;
-      background-color: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
     }
     h1 {
-      color: #2c3e50;
+      color: #2d3748;
       margin-bottom: 10px;
       font-size: 2.5em;
+      text-align: center;
     }
     .subtitle {
-      color: #7f8c8d;
-      font-size: 1.3em;
-      margin-bottom: 24px;
+      color: #718096;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.1em;
     }
-    .form-group {
-      margin-bottom: 20px;
-      text-align: left;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+    .input-group {
+      margin-bottom: 25px;
     }
     label {
       display: block;
-      margin-bottom: 6px;
-      color: #34495e;
-      font-weight: bold;
-      font-size: 1.1em;
+      color: #2d3748;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 1.05em;
     }
-    input[type="password"],
-    input[type="number"] {
+    input[type="password"], input[type="number"] {
       width: 100%;
-      padding: 14px;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      font-size: 1.1em;
-      box-sizing: border-box;
+      padding: 15px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1.05em;
+      transition: border 0.3s;
+    }
+    input:focus {
+      outline: none;
+      border-color: #667eea;
     }
     input[type="number"] {
       text-align: center;
       font-weight: bold;
+      font-size: 1.3em;
     }
-    small {
-      color: #7f8c8d;
-      font-size: 0.95em;
-      display: block;
+    .hint {
+      color: #718096;
+      font-size: 0.9em;
       margin-top: 5px;
     }
     button {
-      background-color: #3498db;
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
-      padding: 16px 32px;
+      padding: 18px;
       font-size: 1.2em;
-      margin-top: 10px;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: background-color 0.3s;
       font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 10px;
     }
-    button:hover {
-      background-color: #2980b9;
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
     }
     button:disabled {
-      cursor: not-allowed;
       opacity: 0.7;
+      cursor: not-allowed;
     }
-    .qr-container {
+    .qr-section {
       margin-top: 40px;
-      padding: 30px;
-      background-color: #f9f9f9;
-      border-radius: 12px;
+      text-align: center;
+    }
+    #qrcode {
       display: inline-block;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      padding: 20px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
     .countdown {
-      font-size: 1.8em;
+      font-size: 2em;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #2d3748;
+    }
+    .countdown.warning {
+      color: #e53e3e;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .alert {
+      background: #fed7d7;
+      border-left: 4px solid #e53e3e;
+      padding: 15px;
+      border-radius: 8px;
       margin-top: 20px;
-      font-weight: bold;
+      color: #742a2a;
+      font-weight: 600;
     }
-    .warning {
-      background-color: #fff3cd;
-      border-left: 4px solid #f39c12;
-      padding: 16px;
-      margin-top: 30px;
-      color: #856404;
-      font-weight: bold;
-      border-radius: 4px;
+    .validation-screen {
       text-align: center;
-      font-size: 1.1em;
-    }
-    .status {
-      color: #27ae60;
-      font-weight: bold;
-      font-size: 1.3em;
-      margin-top: 12px;
-    }
-    .validation-box {
-      background: white;
-      border-radius: 16px;
       padding: 40px;
-      max-width: 600px;
-      margin: 60px auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .validation-screen h1 {
+      font-size: 3em;
+      margin-bottom: 20px;
+    }
+    .validation-screen.success h1 { color: #38a169; }
+    .validation-screen.error h1 { color: #e53e3e; }
+    .validation-screen p {
+      font-size: 1.3em;
+      color: #4a5568;
+      line-height: 1.6;
     }
   </style>
 </head>
 <body>
 
-<!-- MODALITÀ GENERATORE QR (default) -->
-<div class="container" id="generator-mode">
-  <h1>Rilevazione Presenze in Aula</h1>
-  <p class="subtitle">Sistema con QR Code dinamico - UniCal</p>
+<!-- GENERATORE QR -->
+<div class="card" id="generator" style="display:block;">
+  <h1>🎓 Presenze in Aula</h1>
+  <p class="subtitle">Università della Calabria</p>
 
-  <div class="form-group">
-    <label for="formUrl">Inserisci l'URL del form Microsoft:</label>
-    <input type="password" id="formUrl" placeholder="https://forms.microsoft.com/..." required />
-    <small>L'URL è nascosto per sicurezza e non sarà visibile agli studenti.</small>
+  <div class="input-group">
+    <label for="formUrl">URL Form Microsoft</label>
+    <input type="password" id="formUrl" placeholder="Incolla qui l'URL del form" />
+    <div class="hint">⚠️ L'URL non sarà visibile agli studenti</div>
   </div>
 
-  <div class="form-group">
-    <label for="periodInput">Intervallo aggiornamento QR Code (secondi):</label>
-    <input type="number" id="periodInput" value="60" min="45" max="180" step="15" />
-    <small>Minimo 45 secondi. Consigliato: 60s (aule standard), 90s (aule grandi 200+ studenti)</small>
+  <div class="input-group">
+    <label for="period">Durata validità QR (secondi)</label>
+    <input type="number" id="period" value="60" min="30" max="180" step="15" />
+    <div class="hint">Consigliato: 60s per aule normali, 90-120s per aule grandi</div>
   </div>
 
-  <button id="startBtn">Avvia QR Code</button>
+  <button id="startBtn" onclick="avviaQR()">🚀 Avvia Sistema</button>
 
-  <div class="status" id="status"></div>
-  <p class="countdown" id="countdown">Pronto per iniziare</p>
-
-  <div class="qr-container">
+  <div class="qr-section" id="qrSection" style="display:none;">
+    <div class="countdown" id="countdown"></div>
     <div id="qrcode"></div>
-  </div>
-
-  <div class="warning" id="warning">
-    ⏰ Il QR code cambia automaticamente. Scansionalo subito quando appare!
+    <div class="alert">
+      ⏰ Il QR cambia automaticamente. Gli studenti devono scansionarlo subito!
+    </div>
   </div>
 </div>
 
-<!-- MODALITÀ VALIDAZIONE (quando viene scansionato il QR) -->
-<div class="validation-box" id="validation-mode" style="display:none;">
-  <h1 id="validation-title">🔍 Verifica QR Code...</h1>
-  <p id="validation-message">Attendere, controllo validità...</p>
+<!-- SCHERMATA VALIDAZIONE -->
+<div class="card validation-screen" id="validation" style="display:none;">
+  <h1 id="validationIcon">🔍</h1>
+  <h2 id="validationTitle">Verifica in corso...</h2>
+  <p id="validationMessage">Controllo validità del QR Code...</p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
-// ========================================
-// RILEVA SE SIAMO IN MODALITÀ VALIDAZIONE
-// ========================================
-const urlParams = new URLSearchParams(window.location.search);
-const validationToken = urlParams.get("t");
-const validationPeriod = urlParams.get("period");
-const validationForm = urlParams.get("form");
+// =============================================
+// CONFIGURAZIONE
+// =============================================
+const TOLERANCE = 1; // Finestre di tolleranza (±1 = accetta anche bin precedente/successivo)
 
-if (validationToken && validationPeriod && validationForm) {
+// =============================================
+// RILEVA MODALITÀ
+// =============================================
+const params = new URLSearchParams(window.location.search);
+const t = params.get('t');
+const p = params.get('p');
+const f = params.get('f');
+
+if (t && p && f) {
   // MODALITÀ VALIDAZIONE
-  document.getElementById('generator-mode').style.display = 'none';
-  document.getElementById('validation-mode').style.display = 'block';
-  validateQRCode(validationToken, validationPeriod, validationForm);
+  document.getElementById('generator').style.display = 'none';
+  document.getElementById('validation').style.display = 'block';
+  validaQR(parseInt(t), parseInt(p), decodeURIComponent(f));
 } else {
-  // MODALITÀ GENERATORE (normale)
-  initGenerator();
+  // MODALITÀ GENERATORE
+  // (già visibile)
 }
 
-// ========================================
-// FUNZIONE DI VALIDAZIONE
-// ========================================
-function validateQRCode(token, period, formUrl) {
-  const TOLERANCE = 1; // ±1 finestra di tolleranza
+// =============================================
+// FUNZIONE VALIDAZIONE
+// =============================================
+function validaQR(binRicevuto, period, formUrl) {
+  console.log('=== VALIDAZIONE QR ===');
+  console.log('Bin ricevuto:', binRicevuto);
+  console.log('Period:', period);
+  console.log('Form URL:', formUrl);
 
-  const binRicevuto = parseInt(token);
-  const periodSeconds = parseInt(period);
+  const nowSec = Math.floor(Date.now() / 1000);
+  const binCorrente = Math.floor(nowSec / period);
+  const diff = Math.abs(binCorrente - binRicevuto);
 
-  if (isNaN(binRicevuto) || isNaN(periodSeconds)) {
-    showValidationError("❌ QR Code non valido", "Parametri errati o danneggiati.");
+  console.log('Bin corrente:', binCorrente);
+  console.log('Differenza:', diff);
+  console.log('Tolleranza:', TOLERANCE);
+  console.log('Valido:', diff <= TOLERANCE);
+
+  const valScreen = document.getElementById('validation');
+  const icon = document.getElementById('validationIcon');
+  const title = document.getElementById('validationTitle');
+  const msg = document.getElementById('validationMessage');
+
+  if (diff <= TOLERANCE) {
+    // ✅ QR VALIDO
+    valScreen.className = 'card validation-screen success';
+    icon.textContent = '✅';
+    title.textContent = 'QR Code Valido!';
+    msg.innerHTML = `Reindirizzamento al modulo in corso...<br><br><small>Se non vieni reindirizzato, <a href="${formUrl}" style="color:#667eea; font-weight:bold;">clicca qui</a></small>`;
+
+    setTimeout(() => {
+      window.location.href = formUrl;
+    }, 1500);
+  } else {
+    // ❌ QR SCADUTO
+    const secondiScaduti = (diff - TOLERANCE) * period;
+    valScreen.className = 'card validation-screen error';
+    icon.textContent = '⛔';
+    title.textContent = 'QR Code Scaduto';
+    msg.textContent = `Questo QR è scaduto da ${secondiScaduti} secondi. Chiedi al docente di mostrare il QR aggiornato.`;
+  }
+}
+
+// =============================================
+// FUNZIONE GENERATORE QR
+// =============================================
+let timer = null;
+let countdownInterval = null;
+let PERIOD = 60;
+let FORM_URL = '';
+
+function avviaQR() {
+  const urlInput = document.getElementById('formUrl');
+  const periodInput = document.getElementById('period');
+
+  FORM_URL = urlInput.value.trim();
+  PERIOD = parseInt(periodInput.value);
+
+  if (!FORM_URL) {
+    alert('⚠️ Inserisci l'URL del form Microsoft!');
     return;
   }
 
+  if (PERIOD < 30 || PERIOD > 180) {
+    alert('⚠️ Il periodo deve essere tra 30 e 180 secondi!');
+    return;
+  }
+
+  // Disabilita inputs
+  urlInput.disabled = true;
+  periodInput.disabled = true;
+  document.getElementById('startBtn').disabled = true;
+  document.getElementById('startBtn').textContent = `✅ Sistema Attivo (${PERIOD}s)`;
+
+  // Mostra sezione QR
+  document.getElementById('qrSection').style.display = 'block';
+
+  // Avvia generazione
+  generaQR();
+}
+
+function generaQR() {
   const nowSec = Math.floor(Date.now() / 1000);
-  const binCorrente = Math.floor(nowSec / periodSeconds);
-  const differenza = Math.abs(binCorrente - binRicevuto);
+  const bin = Math.floor(nowSec / PERIOD);
 
-  if (differenza <= TOLERANCE) {
-    // QR VALIDO - Redirect al form
-    document.getElementById('validation-title').textContent = "✅ QR Code valido!";
-    document.getElementById('validation-title').style.color = "#27ae60";
-    document.getElementById('validation-message').textContent = "Reindirizzamento al modulo presenze...";
+  // Costruisci URL con parametri
+  const baseUrl = window.location.href.split('?')[0];
+  const qrUrl = `${baseUrl}?t=${bin}&p=${PERIOD}&f=${encodeURIComponent(FORM_URL)}`;
 
-    // Redirect dopo 1 secondo
-    setTimeout(() => {
-      window.location.href = decodeURIComponent(formUrl);
-    }, 1000);
-  } else {
-    // QR SCADUTO
-    const secondiScaduto = (differenza - TOLERANCE) * periodSeconds;
-    showValidationError(
-      "⛔ QR Code scaduto", 
-      `Questo QR non è più valido (scaduto da ${secondiScaduto} secondi). Richiedi al docente di mostrare il QR Code aggiornato.`
-    );
-  }
-}
+  console.log('QR generato:', qrUrl);
+  console.log('Bin corrente:', bin);
 
-function showValidationError(title, message) {
-  document.getElementById('validation-title').textContent = title;
-  document.getElementById('validation-title').style.color = "#e74c3c";
-  document.getElementById('validation-message').textContent = message;
-}
-
-// ========================================
-// FUNZIONE GENERATORE QR
-// ========================================
-function initGenerator() {
-  let PERIOD = 60;
-  let timerId = null;
-  let countdownTimer = null;
-  let formUrl = "";
-
-  function clearQR() {
-    document.getElementById('qrcode').innerHTML = '';
-  }
-
-  function buildUrl(baseUrl, token, period) {
-    // Il QR punta allo stesso file HTML ma con parametri di validazione
-    const currentPageUrl = window.location.href.split('?')[0];
-    return `${currentPageUrl}?t=${token}&period=${period}&form=${encodeURIComponent(baseUrl)}`;
-  }
-
-  function updateCountdown() {
-    const nowSec = Math.floor(Date.now() / 1000);
-    const elapsed = nowSec % PERIOD;
-    const remaining = PERIOD - elapsed;
-    const countdownEl = document.getElementById('countdown');
-
-    countdownEl.textContent = `✅ Scansiona ora! Rimangono ${remaining} secondi`;
-    countdownEl.style.color = remaining > 10 ? '#27ae60' : '#e74c3c';
-  }
-
-  function renderQR(baseUrl) {
-    const nowSec = Math.floor(Date.now() / 1000);
-    const bin = Math.floor(nowSec / PERIOD);
-    const url = buildUrl(baseUrl, bin, PERIOD);
-
-    clearQR();
-
-    try {
-      new QRCode(document.getElementById('qrcode'), {
-        text: url,
-        width: 400,
-        height: 400,
-        correctLevel: QRCode.CorrectLevel.H
-      });
-    } catch (e) {
-      // Fallback per browser non compatibili
-      const img = document.createElement('img');
-      img.alt = 'QR Code';
-      img.width = 400;
-      img.height = 400;
-      img.src = `https://quickchart.io/qr?text=${encodeURIComponent(url)}&size=400`;
-      document.getElementById('qrcode').appendChild(img);
-    }
-
-    document.getElementById('status').textContent = `✅ QR Code valido per ${PERIOD} secondi`;
-  }
-
-  function scheduleNextUpdate() {
-    const nowSec = Math.floor(Date.now() / 1000);
-    const nextBinStart = ((Math.floor(nowSec / PERIOD) + 1) * PERIOD);
-    const delayMs = (nextBinStart - nowSec) * 1000 + 250;
-
-    timerId = setTimeout(() => {
-      tick();
-    }, Math.max(250, delayMs));
-  }
-
-  function tick() {
-    if (!formUrl) return;
-    renderQR(formUrl);
-    scheduleNextUpdate();
-
-    if (countdownTimer) clearInterval(countdownTimer);
-    countdownTimer = setInterval(updateCountdown, 1000);
-    updateCountdown();
-  }
-
-  document.getElementById('startBtn').addEventListener('click', function () {
-    const urlInput = document.getElementById('formUrl');
-    const periodInput = document.getElementById('periodInput');
-
-    if (!urlInput.value.trim()) {
-      alert("Per favore inserisci un URL valido.");
-      return;
-    }
-
-    const userPeriod = parseInt(periodInput.value);
-    if (isNaN(userPeriod) || userPeriod < 45 || userPeriod > 180) {
-      alert("L'intervallo deve essere tra 45 e 180 secondi.");
-      return;
-    }
-
-    PERIOD = userPeriod;
-    formUrl = urlInput.value.trim();
-
-    const warningEl = document.getElementById('warning');
-    if (PERIOD === 60) {
-      warningEl.textContent = "⏰ Il QR code cambia ogni minuto. Scansionalo subito quando appare!";
-    } else {
-      warningEl.textContent = `⏰ Il QR code cambia ogni ${PERIOD} secondi. Scansionalo subito quando appare!`;
-    }
-
-    this.disabled = true;
-    this.textContent = `Sistema attivo (${PERIOD}s)`;
-    this.style.backgroundColor = "#27ae60";
-
-    urlInput.disabled = true;
-    periodInput.disabled = true;
-
-    tick();
+  // Pulisci e rigenera QR
+  document.getElementById('qrcode').innerHTML = '';
+  new QRCode(document.getElementById('qrcode'), {
+    text: qrUrl,
+    width: 400,
+    height: 400,
+    correctLevel: QRCode.CorrectLevel.H
   });
 
-  document.getElementById('status').textContent = `⏳ Sistema pronto. Configura e clicca Avvia.`;
+  // Programma prossimo update
+  const prossimoBin = (bin + 1) * PERIOD;
+  const delay = (prossimoBin - nowSec) * 1000 + 200;
+
+  clearTimeout(timer);
+  timer = setTimeout(generaQR, delay);
+
+  // Avvia countdown
+  clearInterval(countdownInterval);
+  countdownInterval = setInterval(aggiornaCountdown, 1000);
+  aggiornaCountdown();
+}
+
+function aggiornaCountdown() {
+  const nowSec = Math.floor(Date.now() / 1000);
+  const elapsed = nowSec % PERIOD;
+  const remaining = PERIOD - elapsed;
+
+  const el = document.getElementById('countdown');
+  el.textContent = `⏱️ ${remaining}s rimanenti`;
+
+  if (remaining <= 10) {
+    el.className = 'countdown warning';
+  } else {
+    el.className = 'countdown';
+  }
 }
 </script>
-
-<!-- Libreria QRCode.js -->
-<script src="https://cdn.jsdelivr.net/npm/qrcode.js@0.7.0/build/qrcode.min.js"></script>
 
 </body>
 </html>
