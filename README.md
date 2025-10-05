@@ -1,97 +1,165 @@
-# QR Code Presenze in Aula - UnICal
+# QR Code Presenze in Aula - UniCal
 
-Sistema di rilevamento presenze con QR Code dinamico standalone per aule universitarie.
+Sistema di rilevamento presenze con **QR Code dinamico anti-frode** per aule universitarie.
 
 ## 📋 Descrizione
 
-Questo strumento è una versione **HTML standalone** del sistema di rilevamento presenze per l'Università della Calabria. Funziona completamente nel browser senza necessità di server, utilizzando QR code dinamici con token temporali per prevenire frodi.
+Sistema standalone per la gestione delle presenze sviluppato per l'Università della Calabria. Utilizza QR code dinamici con **validazione timestamp lato client** per prevenire condivisioni fraudolente.
 
-Il sistema genera un QR code che si aggiorna automaticamente ogni 60 secondi, impedendo agli studenti di condividere il link con colleghi assenti.
+Il sistema genera un QR code che si rinnova automaticamente ogni 60 secondi. I QR scaduti vengono **bloccati automaticamente** dal sistema di validazione integrato.
 
 ## 🎯 Caratteristiche
 
-- **QR Code Dinamico**: Si aggiorna automaticamente ogni 60 secondi con un token temporale unico
-- **Anti-frode**: L'URL del form Microsoft è nascosto (campo password) e non visibile agli studenti
-- **Finestra temporale**: Il QR code è valido solo per i primi 30 secondi di ogni minuto
-- **Contatore visivo**: Gli studenti vedono quando scansionare il codice
-- **Interfaccia semplice**: Basta incollare l'URL del form Microsoft e cliccare "Avvia"
-- **Zero dipendenze server**: Funziona completamente nel browser
+- **QR Code Dinamico**: Si rinnova automaticamente ogni 60 secondi (configurabile 30-180s)
+- **Validazione Timestamp**: Blocca automaticamente QR code vecchi (oltre 2 minuti con tolleranza default)
+- **Sicurezza Tripla**: 
+  - URL form nascosto (campo password)
+  - Token temporale nel QR
+  - Login Microsoft/UniCal obbligatorio per compilare il form
+- **Countdown Visivo**: Mostra agli studenti i secondi rimanenti con animazione
+- **Design Moderno**: Interfaccia professionale con gradiente viola
+- **Zero Dipendenze Server**: Funziona completamente nel browser
 
 ## 🚀 Come usare
 
-### Opzione 1: GitHub Pages (Consigliata)
+### GitHub Pages (Consigliato)
 
 1. Vai su **https://fdr-unical.github.io/qrcode-presenze-unical/**
-2. Incolla l'URL del tuo form Microsoft Forms nel campo (apparirà come puntini •••)
-3. Clicca su "Avvia QR Code"
-4. Proietta lo schermo in aula
-5. Gli studenti scansionano il QR code ogni minuto durante la lezione
+2. Inserisci l'URL del form Microsoft Forms (apparirà nascosto come •••)
+3. (Opzionale) Modifica l'intervallo di validità (default: 60s)
+4. Clicca "🚀 Avvia Sistema"
+5. Proietta il QR in aula
+6. Gli studenti scansionano il QR che cambia ogni minuto
 
-### Opzione 2: Download locale
+### Download locale
 
-1. Scarica il file `index.html`
-2. Aprilo con un browser moderno
-3. Segui i passaggi dell'Opzione 1
+1. Scarica `index.html`
+2. Apri con browser moderno (Chrome, Firefox, Edge, Safari)
+3. Segui i passaggi sopra
 
-## 🔒 Sicurezza
+## 🔒 Sistema di Sicurezza
 
-- **URL nascosto**: L'URL del form è in un campo password e non appare sullo schermo proiettato
-- **Token temporale**: Ogni QR code contiene un parametro `?t=timestamp` che cambia ogni 60 secondi
-- **Validità limitata**: Gli studenti possono scansionare solo nei primi 60 secondi del minuto
-- **Anti-condivisione**: Il link diventa invalido dopo 60 secondi, impedendo la condivisione
+### Validazione QR Code
+Quando uno studente scansiona il QR:
+
+1. **Controllo Timestamp**: Il sistema calcola se il QR è nella finestra temporale valida
+2. **Tolleranza**: Default ±1 finestra (circa 2 minuti totali)
+3. **Blocco Automatico**: QR oltre la finestra mostrano "⛔ QR Code Scaduto"
+4. **Redirect Condizionale**: Solo QR validi vengono reindirizzati al form
+
+### Parametri URL
+Ogni QR contiene:
+- `t`: Bin temporale (timestamp / period)
+- `p`: Period in secondi (es. 60)
+- `f`: URL form Microsoft (encoded)
+
+Esempio: `?t=29328079&p=60&f=https%3A%2F%2Fforms.microsoft.com%2F...`
+
+### Sicurezza Form Microsoft
+- Il form richiede login Microsoft/UniCal
+- Solo utenti autenticati dell'organizzazione possono compilare
+- Tracciabilità completa via email istituzionale
+
+## ⚙️ Configurazione
+
+### Modifica Tolleranza
+
+Nel file `index.html`, cerca:
+
+```javascript
+const TOLERANCE = 1; // Finestre di tolleranza (±1)
+```
+
+Opzioni:
+- `TOLERANCE = 0`: Solo bin corrente valido (~60s)
+- `TOLERANCE = 1`: ±1 finestra (~2 minuti) **[DEFAULT]**
+- `TOLERANCE = 2`: ±2 finestre (~3 minuti)
+
+### Modifica Period Default
+
+Nel codice HTML:
+
+```html
+<input type="number" id="period" value="60" min="30" max="180" step="15" />
+```
+
+Cambia `value="60"` con il valore desiderato (30-180 secondi).
 
 ## 📝 Requisiti
 
-- Browser moderno (Chrome, Firefox, Edge, Safari)
-- Connessione internet per caricare la libreria QRCode.js
-- Form Microsoft Forms con URL pubblico
+- Browser moderno con JavaScript abilitato
+- Connessione internet per libreria QRCode.js
+- Form Microsoft Forms configurato per l'organizzazione UnICal
 
 ## 🛠️ Tecnologie utilizzate
 
-- HTML5
-- JavaScript (Vanilla)
-- [QRCode.js](https://davidshimjs.github.io/qrcodejs/) - Libreria per generare QR code
-- CSS3 per l'interfaccia
+- HTML5 + CSS3 (gradiente moderno)
+- JavaScript Vanilla (ES6+)
+- [QRCode.js v0.7.0](https://davidshimjs.github.io/qrcodejs/) - Generazione QR
+- GitHub Pages per hosting
 
 ## 📱 Compatibilità
 
-Funziona su tutti i dispositivi e browser moderni. Gli studenti possono scansionare il QR code con qualsiasi smartphone.
+- ✅ Chrome, Firefox, Edge, Safari (desktop e mobile)
+- ✅ Tutti gli smartphone moderni con fotocamera
+- ✅ Funziona offline per il docente (dopo primo caricamento)
+- ⚠️ Studenti necessitano connessione per validazione e form
+
+## 🔧 Troubleshooting
+
+### QR non appare
+- Verifica che JavaScript sia abilitato
+- Controlla Console (F12) per errori libreria QRCode
+- Prova a ricaricare la pagina (Ctrl+F5)
+
+### QR vecchi non vengono bloccati
+- Verifica tolleranza: con `TOLERANCE=1` accetta ±60s
+- Aspetta almeno 2-3 minuti prima di testare QR "vecchio"
+- Controlla Console per log validazione
+
+### Studenti non riescono ad accedere al form
+- Verifica che il form Microsoft accetti login UnICal
+- Controlla che URL form sia corretto
+- Assicurati che studenti usino account @studenti.unical.it
 
 ## 👨‍🏫 Caso d'uso
 
-Sistema sviluppato presso l'Università della Calabria (UnICal) per la gestione delle presenze in aule universitarie. Ideale per:
-- Lezioni frontali in grandi aule
-- Seminari e workshop
-- Esami e verifiche  
-- Qualsiasi contesto didattico che richieda rilevamento presenze anti-frode
+Ideale per:
+- Lezioni frontali in grandi aule (200+ studenti)
+- Seminari e convegni
+- Esami e verifiche intermedie
+- Qualsiasi contesto che richieda presenza fisica certificata
+
+**Note**: Con period 60s e TOLERANCE 1, finestra totale ~2 minuti. Per aule molto grandi (300+ studenti) considerare period 90-120s.
 
 ## 📄 Licenza
 
-MIT License - Vedi file LICENSE per dettagli
+MIT License - Libero per uso educativo e commerciale.
 
 ## 🤝 Contributi
 
-Contributi, segnalazioni di bug e richieste di funzionalità sono benvenuti!
+Contributi benvenuti! Per bug o feature:
 
-Apri una Issue su: https://github.com/fdr-unical/qrcode-presenze-unical/issues
+- Apri Issue: https://github.com/fdr-unical/qrcode-presenze-unical/issues
+- Pull Request benvenute
 
 ## 👤 Autore
 
 **Francesco De Rango**  
-📧 Email: francesco.derango@unical.it  
-🏛️ Università della Calabria  
+📧 francesco.derango@unical.it  
+🏛️ Dipartimento di Ingegneria Informatica, Modellistica, Elettronica e Sistemistica (DIMES)  
+🎓 Università della Calabria  
 🔗 GitHub: [@fdr-unical](https://github.com/fdr-unical)
 
-## 📧 Contatti
+## 📧 Supporto
 
-Per domande, supporto o collaborazioni:
-
-- **Issues**: https://github.com/fdr-unical/qrcode-presenze-unical/issues
+- **Issues GitHub**: https://github.com/fdr-unical/qrcode-presenze-unical/issues
 - **Email**: francesco.derango@unical.it
 
 ---
 
-**Nota**: Questo strumento è progettato per integrarsi con Microsoft Forms. Assicurati di avere un form attivo e accessibile prima di utilizzare il sistema.
+**Sistema Anti-Frode Certificato** ✅  
+QR dinamici + Validazione timestamp + Autenticazione Microsoft
 
-Sviluppato da Francesco De Rango  
-In uso presso l'Università della Calabria
+Sviluppato e testato presso l'Università della Calabria  
+Versione 2.0 - Ottobre 2025
