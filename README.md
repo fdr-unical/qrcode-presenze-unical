@@ -37,8 +37,8 @@ Il sistema genera un QR code che si aggiorna automaticamente ogni 60 secondi, im
 
 - **URL nascosto**: L'URL del form è in un campo password e non appare sullo schermo proiettato
 - **Token temporale**: Ogni QR code contiene un parametro `?t=timestamp` che cambia ogni 60 secondi
-- **Validità limitata**: Gli studenti possono scansionare solo nei primi 30 secondi del minuto
-- **Anti-condivisione**: Il link diventa invalido dopo 30 secondi, impedendo la condivisione
+- **Validità limitata**: Gli studenti possono scansionare solo nei primi 60 secondi del minuto
+- **Anti-condivisione**: Il link diventa invalido dopo 60 secondi, impedendo la condivisione
 
 ## 📝 Requisiti
 
